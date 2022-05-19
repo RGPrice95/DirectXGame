@@ -3,6 +3,7 @@
 
 class SwapChain;
 class DeviceContext;
+class VertexBuffer;
 
 class GraphicsEngine
 {
@@ -18,6 +19,12 @@ public:
 public: 
 	SwapChain* createSwapChain(); //Graphics Engine will create the instance of our swap chain
 	DeviceContext* getImmediateDeviceContext();
+	VertexBuffer* createVertexBuffer();
+
+public:
+	bool createShaders();
+	bool setShaders();
+	void getShaderBufferAndSize(void** bytecode, UINT* size);
 
 public:
 	static GraphicsEngine* get(); //Make this a singleton
@@ -35,10 +42,18 @@ private:
 	IDXGIDevice* m_dxgi_device;
 	IDXGIAdapter* m_dxgi_adapter;
 	IDXGIFactory* m_dxgi_factory;
+	ID3D11DeviceContext* m_imm_context;
+
+private:
+	ID3DBlob* m_vsblob = nullptr;
+	ID3DBlob* m_psblob = nullptr;
+	ID3D11VertexShader* m_vs = nullptr;
+	ID3D11PixelShader* m_ps = nullptr;
 
 private:
 	//A friend class in C++ can access the private and protected members of the class in which it is declared as a friend. 
-	//Use it in this case so that the swapchain class can access what it needs from the graphics engine, without having to expose things
+	//Use it in this case so that the swapchain/vertexbuffer/etc. class can access what it needs from the graphics engine, without having to expose things
 	friend class SwapChain;
+	friend class VertexBuffer;
 };
 

@@ -1,6 +1,9 @@
 #include "GraphicsEngine.h"
 #include "SwapChain.h"
 #include "DeviceContext.h"
+#include "VertexBuffer.h"
+
+#include <d3dcompiler.h>
 
 GraphicsEngine::GraphicsEngine()
 {
@@ -30,7 +33,6 @@ bool GraphicsEngine::init()
 	UINT num_feature_levels = ARRAYSIZE(feature_levels);
 
 	HRESULT res = 0;
-	ID3D11DeviceContext* m_imm_context;
 	for (UINT driver_type_index = 0; driver_type_index < num_driver_types;)
 	{
 		res = D3D11CreateDevice(NULL, driver_types[driver_type_index], NULL, NULL, feature_levels, num_feature_levels, D3D11_SDK_VERSION, &m_d3d_device, &m_feature_level, &m_imm_context);
@@ -83,9 +85,39 @@ DeviceContext* GraphicsEngine::getImmediateDeviceContext()
 	return this->m_imm_device_context;
 }
 
+VertexBuffer* GraphicsEngine::createVertexBuffer()
+{
+	return new VertexBuffer();
+}
+
+bool GraphicsEngine::createShaders()
+{
+	ID3DBlob* errblob = nullptr;
+	D3DCompileFromFile(L"shader.fx", nullptr, nullptr, "vsmain", "vs_5_0", NULL, NULL, &m_vsblob, &errblob);
+	D3DCompileFromFile(L"shader.fx", nullptr, nullptr, "psmain", "ps_5_0", NULL, NULL, &m_psblob, &errblob);
+	m_d3d_device->CreateVertexShader(m_vsblob->GetBufferPointer(), m_vsblob->GetBufferSize(), nullptr, &m_vs);
+	m_d3d_device->CreatePixelShader(m_psblob->GetBufferPointer(), m_psblob->GetBufferSize(), nullptr, &m_ps);
+	return true;
+}
+
+bool GraphicsEngine::setShaders()
+{
+	m_imm_context->VSSetShader(m_vs, nullptr, 0);
+	m_imm_context->PSSetShader(m_ps, nullptr, 0);
+	return true;
+}
+
+void GraphicsEngine::getShaderBufferAndSize(void** bytecode, UINT* size)
+{
+	*bytecode = this->m_vsblob->GetBufferPointer();
+	*size = (UINT)this->m_vsblob->GetBufferSize();
+}
+
 //We will always get the address of the same instance, we cannot create any more of these, singleton
 GraphicsEngine* GraphicsEngine::get()
 {
 	static GraphicsEngine engine;
 	return &engine;
 }
+
+
